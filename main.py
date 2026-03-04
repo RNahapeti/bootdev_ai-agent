@@ -4,6 +4,7 @@ import argparse
 # Third-Party libraries
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 def main():
     # Use argparse library to get user prompt as a command-line argument
@@ -19,9 +20,10 @@ def main():
     client = genai.Client(api_key=api_key)
 
     # API request - use specific model and pass on user prompt
+    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
     response = client.models.generate_content(
         model = "gemini-2.5-flash",
-        contents = args.user_prompt
+        contents = messages
     )
 
     # Check for API resquest error - did we receive data back?
