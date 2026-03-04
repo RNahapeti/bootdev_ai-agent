@@ -10,6 +10,7 @@ def main():
     # Use argparse library to get user prompt as a command-line argument
     parser = argparse.ArgumentParser(description="Gemini code assistant")
     parser.add_argument("user_prompt", type=str, help="Add user prompt to send to Gemini - use quotes")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     args = parser.parse_args()
 
     # Setup - load environment variables, validate API key
@@ -23,10 +24,10 @@ def main():
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
     # Start chat
-    generate_chat(client, messages)
+    generate_chat(client, messages, args)
 
 # API request/response cycle
-def generate_chat(client, messages):
+def generate_chat(client, messages, args):
     response = client.models.generate_content(
         model = "gemini-2.5-flash",
         contents = messages
@@ -36,9 +37,11 @@ def generate_chat(client, messages):
     if response.usage_metadata is None:
         raise RuntimeError("Failed API request")
     
-    # Output
-    print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-    print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+    if args.verbose is True:
+        print(f"User prompt: {args.user_prompt}")
+        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+
     print("Gemini response:")
     print(response.text)
 
