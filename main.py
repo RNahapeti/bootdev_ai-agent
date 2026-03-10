@@ -1,6 +1,7 @@
 # Standard libraries
 import os
 import argparse
+from functions.call_function import available_functions
 # Third-Party libraries
 from dotenv import load_dotenv
 from google import genai
@@ -32,9 +33,10 @@ def generate_chat(client, messages, args):
     response = client.models.generate_content(
         model = "gemini-2.5-flash",
         contents = messages,
-        config=types.GenerateContentConfig(
+        config = types.GenerateContentConfig(
+            tools=[available_functions],
             system_instruction=system_prompt,
-            temperature=0
+            temperature=0,
         ),
     )
 
@@ -47,9 +49,12 @@ def generate_chat(client, messages, args):
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
-    print("Gemini response:")
-    print(response.text)
-
+    if response.function_calls:
+        for call in response.function_calls:
+            print(f"Calling function: {call.name}({call.args})")
+    else:
+        print("Gemini response:")
+        print(response.text)
 
 if __name__ == "__main__":
     main()
