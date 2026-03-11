@@ -34,7 +34,7 @@ def main():
         if loop_response:
             print(f"Final response:\n{loop_response}")
             return
-    print(f"Maximum iterations ({MAX_ITERS}) reached")
+    print(f"Maximum iterations ({MAX_ITERATIONS}) reached")
     sys.exit(1)
 
 # API request/response cycle
