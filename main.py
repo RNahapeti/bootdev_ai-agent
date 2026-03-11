@@ -1,8 +1,10 @@
 # Standard libraries
 import os
 import argparse
+import sys
 from functions.call_function import available_functions, call_function
 from prompts import system_prompt
+from config import MAX_ITERATIONS
 # Third-Party libraries
 from dotenv import load_dotenv
 from google import genai
@@ -27,7 +29,13 @@ def main():
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
     # Start chat
-    generate_chat(client, messages, args)
+    for _ in range(MAX_ITERATIONS):
+        loop_response = generate_chat(client, messages, args)
+        if loop_response:
+            print(f"Final response:\n{loop_response}")
+            return
+    print(f"Maximum iterations ({MAX_ITERS}) reached")
+    sys.exit(1)
 
 # API request/response cycle
 def generate_chat(client, messages, args):
@@ -50,6 +58,11 @@ def generate_chat(client, messages, args):
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
+    if response.candidates:
+        for candidate in response.candidates:
+            if candidate.content:
+                messages.append(candidate.content)
+
     if response.function_calls:
         response_parts = []
         for call in response.function_calls:
@@ -64,10 +77,10 @@ def generate_chat(client, messages, args):
             response_parts.append(function_call_result.parts[0])
             if args.verbose:
                 print(f"-> {function_call_result.parts[0].function_response.response}")
+        messages.append(types.Content(role="user", parts=response_parts))
             
     else:
-        print("Gemini response:")
-        print(response.text)
+        return response.text
 
 if __name__ == "__main__":
     main()
