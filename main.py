@@ -1,12 +1,13 @@
 # Standard libraries
 import os
 import argparse
-from functions.call_function import available_functions
+from functions.call_function import available_functions, call_function
+from prompts import system_prompt
 # Third-Party libraries
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from prompts import system_prompt
+
 
 def main():
     # Use argparse library to get user prompt as a command-line argument
@@ -50,8 +51,20 @@ def generate_chat(client, messages, args):
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
     if response.function_calls:
+        response_parts = []
         for call in response.function_calls:
-            print(f"Calling function: {call.name}({call.args})")
+            #print(f"Calling function: {call.name}({call.args})")
+            function_call_result = call_function(call, verbose=args.verbose)
+            if not function_call_result.parts:
+                raise Exception("function_call_result.parts is empty")
+            if not function_call_result.parts[0].function_response:
+                raise Exception(".parts object function_response is empty")
+            if not function_call_result.parts[0].function_response.response:
+                raise Exception(".parts object function_response.response is empty")
+            response_parts.append(function_call_result.parts[0])
+            if args.verbose:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
+            
     else:
         print("Gemini response:")
         print(response.text)
